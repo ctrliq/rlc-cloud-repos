@@ -1,0 +1,12 @@
+specfile_path: dist/rpm/python3-rlc-cloud-repos.spec
+downstream_package_name: python3-rlc-cloud-repos
+upstream_package_name: rlc.cloud_repos
+upstream_ref: dev
+create_pr: false
+update_release: false
+
+actions:
+  post-upstream-clone: "true"  # This disables patch generation
+  create-archive:
+    - make sdist
+    - sh -c 'ls -1t dist/rlc.cloud-repos-*.tar.gz | head -n 1'

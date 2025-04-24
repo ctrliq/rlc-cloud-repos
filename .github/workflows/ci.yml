@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+permissions:
+  pull-requests: write
+  contents: read
+  actions: write
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        # Rocky 8 is on 3.6, Rocky 9 on 3.9. Plus some future proofing.
+        python-version: ["3.6", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    runs-on: ubuntu-latest
+    container: python:${{ matrix.python-version }}
+
+    steps:
+      - name: Set up a comment for coverage output
+        if: matrix.python-version == '3.13' && github.event_name == 'pull_request'
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: Test summary
+
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          make dev
+
+      - name: Run linters
+        # Only run linters on the highest Python version to avoid conflicts
+        if: matrix.python-version == '3.13'
+        run: |
+          make lint
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov --cov-report=html --cov-report=term-missing | tee coverage.txt
+
+          echo '# Test summary from ${{matrix.python-version}}' > tmp_comment.md
+          cat << EOF >> tmp_comment.md
+          <details>
+          <summary>Click to expand</summary>
+
+          \`\`\`
+
+          $(cat coverage.txt)
+
+          \`\`\`
+
+          </details>
+          EOF
+
+      # Only handle coverage reporting from Python 3.13 run
+      - name: Upload coverage report
+        if: matrix.python-version == '3.13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov
+          if-no-files-found: error
+
+      - name: Comment test output on PR
+        if: matrix.python-version == '3.13' && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: tmp_comment.md
+          edit-mode: replace
+
+  source-build:
+    runs-on: ubuntu-latest
+    container: python:3.6
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies and build source
+        run: |
+          python -m pip install --upgrade pip setuptools
+          make dev
+          make spec sdist
+
+      - name: Upload source artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-artifacts
+          path: |
+            dist/*.tar.gz
+            dist/*.spec
+          if-no-files-found: error
+
+  mock-builds:
+    needs: source-build
+    strategy:
+      matrix:
+        rocky-version: ["8", "9"]
+
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:latest
+      options: --privileged
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download source artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: source-artifacts
+          path: dist/
+
+      - name: Install dependencies
+        run: |
+          dnf install -y python3-pip mock make
+          make dev
+
+      - name: Build RPMs
+        run: make mock MOCK_CONFIG=rocky-${{ matrix.rocky-version }}-x86_64 MOCK_OPTS="--no-bootstrap-chroot --no-cleanup-after --isolation=simple"
+
+      - name: Store RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocky${{ matrix.rocky-version }}-rpms
+          path: |
+            dist/*.src.rpm
+            dist/*.noarch.rpm
+          if-no-files-found: error

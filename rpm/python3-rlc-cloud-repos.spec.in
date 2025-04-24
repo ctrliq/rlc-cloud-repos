@@ -1,0 +1,79 @@
+%global pypi_name rlc.cloud-repos
+%global pkg_name rlc.cloud_repos
+%global rpm_name rlc-cloud-repos
+
+%global python_wheelname %{pkg_name}-%{version}-py3-none-any.whl
+%global build_wheel 1
+
+Name:           python%{python3_pkgversion}-%{rpm_name}
+Version:        VERSION
+Release:        1%{?dist}
+Summary:        A cloud-init querying and repository configuration tool for Rocky Linux from CIQ Products (RLC)
+
+License:        MIT
+URL:            https://ciq.com/
+Source0:        %{pypi_name}-%{version}.tar.gz
+
+BuildArch:      noarch
+BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  python%{python3_pkgversion}-devel
+
+%if 0%{?build_wheel}
+BuildRequires:  python%{python3_pkgversion}-pip
+BuildRequires:  python%{python3_pkgversion}-wheel
+%endif
+
+Requires:       python%{python3_pkgversion}
+Requires:       python%{python3_pkgversion}-pyyaml
+Requires:       cloud-init
+
+%description
+Installs a utility plus cloud-init configuration to run the utility on first and every boot to check the instance metadata and update the RLC RPM repositories to point to the appropriate source.
+
+%prep
+%setup -q -n %{pypi_name}-%{version}
+
+%build
+%if 0%{?build_wheel}
+%py3_build_wheel
+%else
+%py3_build
+%endif
+
+%install
+
+%if 0%{?build_wheel}
+%py3_install_wheel %{python_wheelname}
+%else
+%py3_install
+%endif
+
+rm %{buildroot}%{_prefix}/config/20_rlc-cloud-repos.cfg
+rm %{buildroot}%{_prefix}/data/ciq-mirrors.yaml
+mkdir -p %{buildroot}%{_sysconfdir}/rlc-cloud-repos
+install -Dm0644 config/20_rlc-cloud-repos.cfg %{buildroot}/etc/cloud/cloud.cfg.d/20_rlc-cloud-repos.cfg
+install -Dm0644 data/ciq-mirrors.yaml %{buildroot}/usr/share/rlc-cloud-repos/ciq-mirrors.yaml
+
+%files
+%license LICENSE
+%doc README.md
+
+# CLI entrypoint (console script)
+%{_bindir}/rlc-cloud-repos
+
+# Python package content
+%{python3_sitelib}/rlc/
+%{python3_sitelib}/rlc.cloud_repos*.dist-info
+%{python3_sitelib}/rlc.cloud_repos-*.pth
+
+# Config and static data
+%dir %{_sysconfdir}/rlc-cloud-repos
+%config(noreplace) %{_sysconfdir}/cloud/cloud.cfg.d/20_rlc-cloud-repos.cfg
+/usr/share/rlc-cloud-repos/ciq-mirrors.yaml
+
+%postun
+rm -f /etc/rlc-cloud-repos/.configured
+
+%changelog
+* Mon Mar 31 2025 Joel Hanger <jhanger@ciq.com> - 0.1.0-1
+- Initial version

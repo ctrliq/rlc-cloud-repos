@@ -1,0 +1,17 @@
+modules = ["python-3.8"]
+run = "pytest --cov --cov-report term-missing"
+[nix]
+channel = "stable-24_05"
+packages = ["libyaml"]
+
+[workflows]
+runButton = "Run Tests with coverage"
+
+[[workflows.workflow]]
+name = "Run Tests with coverage"
+mode = "sequential"
+author = 4915123
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pytest --cov --cov-report term-missing"
