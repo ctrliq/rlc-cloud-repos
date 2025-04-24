@@ -1,0 +1,237 @@
+# Sources:
+#
+# https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azure#azure-paired-regions
+# https://learn.microsoft.com/en-us/azure/reliability/availability-zones-service-support
+
+Regions:
+  - name: eastus
+    registry_georeplications_available: true
+    zone_redundancy_available: true
+    display_name: East US
+    # Official pair is westus but we use westus2 for now since we aren't built out in westus
+    regional_pair: westus2
+  - name: westus2
+    registry_georeplications_available: true
+    zone_redundancy_available: true
+    display_name: West US 2
+    # Official pair is westcentralus but we use eastus for now since we aren't built out in westcentralus
+    regional_pair: eastus
+  - name: northeurope
+    registry_georeplications_available: true
+    zone_redundancy_available: true
+    display_name: North Europe
+    # Official pair is westeurope but we use southeastasia for now since we aren't built out in westeurope
+    regional_pair: southeastasia
+  - name: southeastasia
+    registry_georeplications_available: true
+    zone_redundancy_available: true
+    container_apps_zone_redundancy_available: false
+    display_name: Southeast Asia
+    # Official pair is eastasia but we use northeurope for now since we aren't built out in eastasia
+    regional_pair: northeurope
+  - name: australiaeast
+    registry_georeplications_available: true
+    zone_redundancy_available: true
+    display_name: Australia East
+    # Official pair is australiasoutheast but we use southeastasia for now since we aren't built out in australiasoutheast
+    regional_pair: southeastasia
+  # - name: australiacentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Australia Central
+  #   regional_pair: australiacentral2
+  # - name: brazilsouth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Brazil South
+  #   regional_pair: southcentralus
+  # # brazilsoutheast Not enabled by default, need to open a ticket
+  # - name: brazilsoutheast
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Brazil Southeast
+  #   regional_pair: brazilsouth
+  # - name: canadacentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Canada Central
+  #   regional_pair: canadaeast
+  # - name: francecentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: France Central
+  #   regional_pair: francesouth
+  # - name: germanywestcentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Germany West Central
+  #   regional_pair: germanynorth
+  # - name: centralindia
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Central India
+  #   regional_pair: southindia
+  # - name: westindia
+  #   registry_georeplications_available: false
+  #   zone_redundancy_available: false
+  #   display_name: West India
+  #   regional_pair: southindia
+  # - name: japaneast
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Japan East
+  #   regional_pair: japanwest
+  # - name: koreacentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Korea Central
+  #   regional_pair: koreasouth
+  # - name: norwayeast
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Norway West
+  #   regional_pair: norwayeast
+  # - name: southafricanorth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: South Africa North
+  #   regional_pair: southafricawest
+  # - name: swedencentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Sweden Central
+  #   regional_pair: swedensouth
+  # - name: switzerlandnorth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Switzerland North
+  #   regional_pair: switzerlandwest
+  # - name: ukwest
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: UK West
+  #   regional_pair: uksouth
+  # - name: eastus2
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: East US 2
+  #   regional_pair: centralus
+  # - name: northcentralus
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: North Central US
+  #   regional_pair: southcentralus
+  # - name: uaenorth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: UAE North
+  #   regional_pair: uaecentral
+
+# Regions in the "pair" column that we are not targeting for initial launch
+
+  # - name: australiasoutheast
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Australia Southeast
+  #   regional_pair: australiaeast
+  # # australiacentral2 Not enabled by default, need to open a ticket
+  # - name: australiacentral2
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Australia Central 2
+  #   regional_pair: australiacentral
+  # - name: southcentralus
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: South Central US
+  #   regional_pair: brazilsouth
+  # - name: canadaeast
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Canada East
+  #   regional_pair: canadacentral
+  # - name: westeurope
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: West Europe
+  #   regional_pair: northeurope
+  # # francesouth Not enabled by default, need to open a ticket
+  # - name: francesouth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: France South
+  #   regional_pair: francecentral
+  # # germanynorth Not enabled by default, need to open a ticket
+  # - name: germanynorth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Germany North
+  #   regional_pair: germanywestcentral
+  # - name: southindia
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: South India
+  #   regional_pair: centralindia
+  # - name: japanwest
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false # (technically available, but requires contacting sales team to find out about availability)
+  #   display_name: Japan West
+  #   regional_pair: japaneast
+  # # koreasouth Not enabled by default, need to open a ticket
+  # - name: koreasouth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Korea South
+  #   regional_pair: koreacentral
+  # # norwaywest Not enabled by default, need to open a ticket
+  # - name: norwaywest
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Norway West
+  #   regional_pair: norwayeast
+  # # southafricawest Not enabled by default, need to open a ticket
+  # - name: southafricawest
+  #   registry_georeplications_available: true
+  #   registry_georeplications_available: false
+  #   zone_redundancy_available: false
+  #   display_name: South Africa West
+  #   regional_pair: southafricanorth
+  # # swedensouth Not enabled by default, need to open a ticket
+  # - name: swedensouth
+  #   registry_georeplications_available: true
+  #   registry_georeplications_available: false
+  #   zone_redundancy_available: false
+  #   display_name: Sweden South
+  #   regional_pair: swedencentral
+  # # switzerlandwest Not enabled by default, need to open a ticket
+  # - name: switzerlandwest
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: Switzerland West
+  #   regional_pair: switzerlandnorth
+  # - name: uksouth
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: UK South
+  #   regional_pair: ukwest
+  # - name: westus
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: West US
+  #   regional_pair: eastus
+  # - name: centralus
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: true
+  #   display_name: Central US
+  #   regional_pair: eastus2
+  # - name: westcentralus
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: West Central US
+  #   regional_pair: westus2
+  # # uaecentral Not enabled by default, need to open a ticket
+  # - name: uaecentral
+  #   registry_georeplications_available: true
+  #   zone_redundancy_available: false
+  #   display_name: UAE Central
+  #   regional_pair: uaenorth
