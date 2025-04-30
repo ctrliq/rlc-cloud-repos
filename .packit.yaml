@@ -1,7 +1,7 @@
 specfile_path: dist/rpm/python3-rlc-cloud-repos.spec
 downstream_package_name: python3-rlc-cloud-repos
 upstream_package_name: rlc.cloud_repos
-upstream_ref: dev
+#upstream_ref: dev
 create_pr: false
 update_release: false
 
