@@ -13,7 +13,7 @@ def dnf_dir(tmp_path):
     yield vars_dir
 
 
-def testwrite_dnf_var_new_file(dnf_dir):
+def test_write_dnf_var_new_file(dnf_dir):
     """Test writing a DNF var to a new file"""
     write_dnf_var(dnf_dir, "test", "value")
     path = dnf_dir / "test"
@@ -21,7 +21,7 @@ def testwrite_dnf_var_new_file(dnf_dir):
     assert path.read_text().strip() == "value"
 
 
-def testwrite_dnf_var_new_file_nooverwrite(dnf_dir):
+def test_write_dnf_var_new_file_nooverwrite(dnf_dir):
     """Test writing a DNF var to a new file"""
     write_dnf_var(dnf_dir, "test", "value", overwrite=False)
     path = dnf_dir / "test"
@@ -29,7 +29,7 @@ def testwrite_dnf_var_new_file_nooverwrite(dnf_dir):
     assert path.read_text().strip() == "value"
 
 
-def testwrite_dnf_var_existing_same_value(dnf_dir):
+def test_write_dnf_var_existing_same_value(dnf_dir):
     """Test writing a DNF var when file exists with same value"""
     path = dnf_dir / "test"
     path.write_text("value\n")
@@ -40,7 +40,7 @@ def testwrite_dnf_var_existing_same_value(dnf_dir):
     assert path.read_text().strip() == "value"
 
 
-def testwrite_dnf_var_existing_different_value(dnf_dir):
+def test_write_dnf_var_existing_different_value(dnf_dir):
     """Test writing a DNF var when file exists with different value"""
     path = dnf_dir / "test"
     path.write_text("old_value\n")
@@ -52,7 +52,7 @@ def testwrite_dnf_var_existing_different_value(dnf_dir):
     assert (path.parent / f"test{BACKUP_SUFFIX}").read_text().strip() == "old_value"
 
 
-def testwrite_dnf_var_existing_different_value_nooverwrite(dnf_dir):
+def test_write_dnf_var_existing_different_value_nooverwrite(dnf_dir):
     """Test writing a DNF var when file exists with different value"""
     path = dnf_dir / "test"
     path.write_text("old_value\n")
@@ -63,7 +63,7 @@ def testwrite_dnf_var_existing_different_value_nooverwrite(dnf_dir):
     assert path.read_text().strip() == "old_value"
 
 
-def testwrite_dnf_var_non_writable_dir_non_existent_file(monkeypatch, dnf_dir, caplog):
+def test_write_dnf_var_non_writable_dir_non_existent_file(monkeypatch, dnf_dir, caplog):
     """Test writing DNF var to a non-writable directory."""
     # Make directory "read-only"
     monkeypatch.setattr(
@@ -78,7 +78,7 @@ def testwrite_dnf_var_non_writable_dir_non_existent_file(monkeypatch, dnf_dir, c
     assert "Permission denied" in caplog.text
 
 
-def testwrite_dnf_var_non_writable_dir_pre_existing_file(monkeypatch, dnf_dir, caplog):
+def test_write_dnf_var_non_writable_dir_pre_existing_file(monkeypatch, dnf_dir, caplog):
     """Test writing DNF var to a non-writable directory."""
     # Make directory read-only
     write_dnf_var(dnf_dir, "test", "pre-value")
