@@ -14,7 +14,7 @@ def configure_aws(
 
     There are three states: no bucket, bucket with only a region-config file, and a bucket with contents.
 
-    In the case of the no bucket situation, we set the primary URL to a a default mirror.
+    In the case of the no bucket situation, we set the primary URL to a default mirror.
 
     Args:
         primary_url (str): Preferred mirror. backup_url (str): Fallback mirror. overwrite (bool): If True, overwrites
