@@ -1,7 +1,7 @@
 aws:
   us-east-1: &aws_default
     primary: https://depot-us-east-1.s3.us-east-1.amazonaws.com
-    backup: http://depot-us-east-1.s3-website-us-east-1.amazonaws.com
+    backup: https://depot-us-west-2.s3.us-west-2.amazonaws.com
   us-west-2:
     primary: https://depot-us-west-2.s3.us-west-2.amazonaws.com
     backup: https://depot-us-east-1.s3.us-east-1.amazonaws.com
