@@ -15,8 +15,8 @@ from pathlib import Path
 
 from rlc.cloud_repos import __version__ as rlc_version
 from rlc.cloud_repos.cloud_metadata import get_cloud_metadata
-from rlc.cloud_repos.dnf_vars import ensure_all_dnf_vars
 from rlc.cloud_repos.log_utils import logger, setup_logging
+from rlc.cloud_repos.providers import configure_provider
 from rlc.cloud_repos.repo_config import load_mirror_map, select_mirror
 
 MARKERFILE = "/etc/rlc-cloud-repos/.configured"
@@ -78,7 +78,7 @@ def _configure_repos(mirror_file_path: str) -> None:
 
     # Set DNF vars
     vars_dir = Path(DNF_VARS_DIR)
-    ensure_all_dnf_vars(vars_dir, primary_url, backup_url, overwrite=overwrite)
+    configure_provider(vars_dir, provider, primary_url, backup_url, overwrite)
 
     # Create marker file to prevent future reruns
     write_touchfile()
