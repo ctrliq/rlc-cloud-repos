@@ -9,7 +9,7 @@ def configure_aws(
 ):
     """
     Sets DNF variables for the AWS provider environment. Deletes existing values for product, variant, or
-    cloudcontentdir as those are not set in the AWS Depot mirrors. Also sets up primary urls in regions without
+    contentdir as those are not set in the AWS Depot mirrors. Also sets up primary urls in regions without
     contents.
 
     There are three states: no bucket, bucket with only a region-config file, and a bucket with contents.
@@ -22,4 +22,4 @@ def configure_aws(
     """
     write_dnf_var(basepath, "product", "", overwrite)
     write_dnf_var(basepath, "variant", "", overwrite)
-    write_dnf_var(basepath, "cloudcontentdir", "", overwrite)
+    write_dnf_var(basepath, "contentdir", "", overwrite)

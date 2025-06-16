@@ -13,7 +13,7 @@ def configure_default(
 ):
     """
     Sets DNF variables for the primary and backup mirror URLs. Does not modify existing values for product, variant, or
-    cloudcontentdir
+    contentdir
 
     Args:
         primary_url (str): Preferred mirror. backup_url (str): Fallback mirror. overwrite (bool): If True, overwrites
