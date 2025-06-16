@@ -192,3 +192,23 @@ def test_main_requires_root():
     """Test that the program exits if not run as root."""
     with patch("os.geteuid", return_value=1000):  # Non-root UID
         assert main([]) == 1
+
+
+def test_main_with_env_overrides(
+    monkeypatch, dnf_vars_dir, marker, mirrors_file, mock_root
+):
+    """
+    Test main() with DEBUG_RCR_PROVIDER and DEBUG_RCR_REGION environment variables set.
+    This exercises the code path where provider/region overrides are used.
+    """
+    # do setup: set environment variables for provider and region
+    monkeypatch.setenv("DEBUG_RCR_PROVIDER", "aws")
+    monkeypatch.setenv("DEBUG_RCR_REGION", "us-east-1")
+
+    # perform test operation: call main
+    result = main(["--mirror-file", str(mirrors_file)])
+    # assert expected result: main returns 0 and DNF vars are set for the override
+    assert result == 0
+    assert (
+        dnf_vars_dir / "baseurl1"
+    ).read_text().strip() == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"
