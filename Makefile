@@ -5,6 +5,7 @@ PACKAGE := rlc.cloud-repos
 PY_PACKAGE := rlc.cloud_repos
 RPM_PACKAGE := python3-rlc-cloud-repos
 distdir := dist
+PIP ?= pip
 
 .PHONY: install clean test lint dist rpm spec dev mock test-version
 
@@ -27,12 +28,12 @@ spec: test-version $(distdir)/$(RPM_PACKAGE).spec
 
 dev:
 	@echo "🔧 Installing development dependencies..."
-	pip install $(PIP_OPTIONS) -e .[dev]
-	pip install $(PIP_OPTIONS) -e ./framework[dev]
+	$(PIP) install $(PIP_OPTIONS) -e .[dev]
+	$(PIP) install $(PIP_OPTIONS) -e ./framework[dev]
 
 install:
 	@echo "🔧 Installing $(PACKAGE) globally..."
-	pip install --root=/ --prefix=/usr -e .
+	$(PIP) install --root=/ --prefix=/usr -e .
 
 $(distdir)/$(PY_PACKAGE)-$(VERSION)-py3-none-any.whl: setup.cfg setup.py MANIFEST.in $(shell find cloud-repos -name '*.py') config/* data/*
 	@echo "🛞 Building wheel..."
@@ -95,7 +96,12 @@ PYTHON ?= python3
 PYTHONPATH := src
 PYTHON_VERSION ?= 3.11
 
-.PHONY: test test-coverage test-podman
+.PHONY: test test-coverage test-podman sdist-podman
+
+sdist-podman:
+	@echo "🐋 Building source distribution in Podman container with Python 3.6..."
+	podman pull docker.io/library/python:3.6
+	podman run --rm -v .:/app:Z -w /app python:3.6 bash -c "make dev && make sdist"
 
 test-podman:
 	@echo "🐋 Running tests in Podman container with Python $(PYTHON_VERSION)..."
