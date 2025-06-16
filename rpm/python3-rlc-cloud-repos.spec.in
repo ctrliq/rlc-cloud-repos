@@ -23,8 +23,7 @@ BuildRequires:  python%{python3_pkgversion}-pip
 BuildRequires:  python%{python3_pkgversion}-wheel
 %endif
 
-Requires:       python%{python3_pkgversion}
-Requires:       python%{python3_pkgversion}-pyyaml
+Requires:       python%{python3_pkgversion}-PyYAML
 Requires:       cloud-init
 
 %description
