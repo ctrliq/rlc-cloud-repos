@@ -54,7 +54,7 @@ def test_main_with_force_flag(
 
     assert (
         dnf_vars_dir / "baseurl1"
-    ).read_text().strip() == "https://depot.prod.ciqws.com"
+    ).read_text().strip() == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"
 
 
 def test_main_respects_marker_file(marker, mock_root):
@@ -75,7 +75,7 @@ def test_main_creates_marker_file(dnf_vars_dir, marker, cloud_metadata_mock, moc
 
     assert (
         dnf_vars_dir / "baseurl1"
-    ).read_text().strip() == "https://depot.prod.ciqws.com"
+    ).read_text().strip() == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"
 
 
 def test_main_with_custom_mirror_file(
@@ -87,7 +87,7 @@ def test_main_with_custom_mirror_file(
 
     assert (
         dnf_vars_dir / "baseurl1"
-    ).read_text().strip() == "https://depot.prod.ciqws.com"
+    ).read_text().strip() == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"
 
 
 def test_main_handles_configuration_error(monkeypatch, mock_root):
@@ -109,7 +109,7 @@ def test_configure_repos_writes_touchfile(
     assert "Configured on" in marker.read_text()
     assert (
         dnf_vars_dir / "baseurl1"
-    ).read_text().strip() == "https://depot.prod.ciqws.com"
+    ).read_text().strip() == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"
 
 
 def test_configure_repos_invalid_mirror_file(cloud_metadata_mock):
@@ -133,9 +133,13 @@ def test_configure_repos_test_overwrite_preexisting_file(
     _configure_repos(str(mirrors_file))
 
     # Check that the existing file was modified
-    assert existing_file1.read_text().strip() == "https://depot.prod.ciqws.com"
     assert (
-        existing_file2.read_text().strip() == "https://depot.us-east-2.prod.ciqws.com"
+        existing_file1.read_text().strip()
+        == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"
+    )
+    assert (
+        existing_file2.read_text().strip()
+        == "https://depot-us-west-2.s3.us-west-2.amazonaws.com"
     )
 
 
@@ -188,3 +192,23 @@ def test_main_requires_root():
     """Test that the program exits if not run as root."""
     with patch("os.geteuid", return_value=1000):  # Non-root UID
         assert main([]) == 1
+
+
+def test_main_with_env_overrides(
+    monkeypatch, dnf_vars_dir, marker, mirrors_file, mock_root
+):
+    """
+    Test main() with DEBUG_RCR_PROVIDER and DEBUG_RCR_REGION environment variables set.
+    This exercises the code path where provider/region overrides are used.
+    """
+    # do setup: set environment variables for provider and region
+    monkeypatch.setenv("DEBUG_RCR_PROVIDER", "aws")
+    monkeypatch.setenv("DEBUG_RCR_REGION", "us-east-1")
+
+    # perform test operation: call main
+    result = main(["--mirror-file", str(mirrors_file)])
+    # assert expected result: main returns 0 and DNF vars are set for the override
+    assert result == 0
+    assert (
+        dnf_vars_dir / "baseurl1"
+    ).read_text().strip() == "https://depot-us-east-1.s3.us-east-1.amazonaws.com"

@@ -12,11 +12,12 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from rlc.cloud_repos import __version__ as rlc_version
 from rlc.cloud_repos.cloud_metadata import get_cloud_metadata
-from rlc.cloud_repos.dnf_vars import ensure_all_dnf_vars
 from rlc.cloud_repos.log_utils import logger, setup_logging
+from rlc.cloud_repos.providers import configure_provider
 from rlc.cloud_repos.repo_config import load_mirror_map, select_mirror
 
 MARKERFILE = "/etc/rlc-cloud-repos/.configured"
@@ -48,20 +49,30 @@ def write_touchfile() -> None:
         f.write(f"Configured on {datetime.now().isoformat()}\n")
 
 
-def _configure_repos(mirror_file_path: str) -> None:
+def _configure_repos(
+    mirror_file_path: str, provider: Optional[str] = None, region: Optional[str] = None
+) -> None:
     """
     Core logic for detecting metadata, selecting mirrors, and configuring DNF vars.
+
+    Args:
+        mirror_file_path (str): Path to the mirror YAML file.
+        provider (str, optional): Cloud provider override. If set and non-empty, used verbatim.
+        region (str, optional): Cloud region override. If set and non-empty, used verbatim.
     """
-    # Detect provider + region via cloud-init query
     overwrite = True
-    try:
-        metadata = get_cloud_metadata()
-    except Exception as e:
-        logger.error(f"Failed to get cloud metadata: {e}")
-        metadata = {"provider": "unknown", "region": "unknown"}
-        # An error happened. We want to continue to write dnf vars, but we don't want to overwrite if they are already
-        # set. This is so that we don't break the "non-cloud" case.
-        overwrite = False
+
+    # Use overrides if both are provided and non-empty, else detect via cloud-init
+    if provider and region:
+        metadata = {"provider": provider, "region": region}
+        logger.info(f"Using debug override: provider={provider}, region={region}")
+    else:
+        try:
+            metadata = get_cloud_metadata()
+        except Exception as e:
+            logger.error(f"Failed to get cloud metadata: {e}")
+            metadata = {"provider": "unknown", "region": "unknown"}
+            overwrite = False
 
     provider = metadata["provider"]
     region = metadata["region"]
@@ -78,7 +89,7 @@ def _configure_repos(mirror_file_path: str) -> None:
 
     # Set DNF vars
     vars_dir = Path(DNF_VARS_DIR)
-    ensure_all_dnf_vars(vars_dir, primary_url, backup_url, overwrite=overwrite)
+    configure_provider(vars_dir, provider, primary_url, backup_url, overwrite)
 
     # Create marker file to prevent future reruns
     write_touchfile()
@@ -132,8 +143,21 @@ def main(args=None) -> int:
             return 0
 
     mirror_path = parsed_args.mirror_file or DEFAULT_MIRROR_PATH
+
+    # Safely check for debug environment overrides
+    debug_provider = os.environ.get("DEBUG_RCR_PROVIDER")
+    debug_region = os.environ.get("DEBUG_RCR_REGION")
+    # Only use overrides if both are set and non-empty strings
+    if debug_provider is not None:
+        debug_provider = debug_provider.strip()
+    if debug_region is not None:
+        debug_region = debug_region.strip()
+
     try:
-        _configure_repos(mirror_path)
+        if debug_provider is not None and debug_region is not None:
+            _configure_repos(mirror_path, provider=debug_provider, region=debug_region)
+        else:
+            _configure_repos(mirror_path)
         return 0
     except Exception as e:
         logger.error("Configuration failed: %s", e, exc_info=False)
@@ -141,4 +165,4 @@ def main(args=None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))  # pragma: no cover.git
+    sys.exit(main(sys.argv[1:]))  # pragma: no cover

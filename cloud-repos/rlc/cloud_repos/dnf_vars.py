@@ -19,7 +19,7 @@ BACKUP_SUFFIX = ".bak"
 logger = logging.getLogger(__name__)
 
 
-def _write_dnf_var(
+def write_dnf_var(
     basepath: Path, name: str, value: str, overwrite: Optional[bool] = True
 ):
     """
@@ -68,18 +68,3 @@ def _write_dnf_var(
         logger.info(f"Wrote DNF var '{name}': {value}")
     except Exception as e:
         logger.error(f"Cannot write to DNF var '{name}' ({e}), skipping")
-
-
-def ensure_all_dnf_vars(
-    basepath: Path, primary_url: str, backup_url: str, overwrite: Optional[bool] = True
-):
-    """
-    Sets DNF variables for the primary and backup mirror URLs.
-
-    Args:
-        primary_url (str): Preferred mirror.
-        backup_url (str): Fallback mirror.
-        overwrite (bool): If True, overwrites existing values.
-    """
-    _write_dnf_var(basepath, "baseurl1", primary_url, overwrite=overwrite)
-    _write_dnf_var(basepath, "baseurl2", backup_url, overwrite=overwrite)
