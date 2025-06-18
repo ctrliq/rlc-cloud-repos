@@ -34,10 +34,10 @@ def get_cloud_metadata(cloudcmd: Optional[str] = None) -> Dict[str, str]:
         ).strip()
         return {"provider": provider, "region": region}
     except FileNotFoundError as e:
-        logger.error("cloud-init command not found: %s", e)
-        raise RuntimeError("The cloud-init command was not found")
+        logger.error("%s command not found: %s", cloudcmd, e)
+        raise RuntimeError(f"The {cloudcmd} command was not found")
     except subprocess.CalledProcessError as e:
-        logger.error("Failed to query cloud-init: %s", e)
+        logger.error("Failed to query %s: %s", cloudcmd, e)
         raise RuntimeError(
-            f"cloud-init must be available and functional: An error occurred while querying cloud-init {e}"
+            f"{cloudcmd} must be available and functional. An error occurred while querying {cloudcmd}: {e}"
         )

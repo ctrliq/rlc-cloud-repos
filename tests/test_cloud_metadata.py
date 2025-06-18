@@ -87,8 +87,9 @@ def test_cloud_metadata_no_mock_subprocess(cloud_init):
 
 def test_cloud_metadata_invalid_command():
     """Test that get_cloud_metadata raises an error for an invalid command."""
-    with pytest.raises(RuntimeError, match="cloud-init command was not found"):
-        get_cloud_metadata("invalid-cloud-init-command")
+    invalid_command = "invalid-cloud-init-command"
+    with pytest.raises(RuntimeError, match=f"{invalid_command} command was not found"):
+        get_cloud_metadata(invalid_command)
 
 
 def test_cloud_metadata_invalid_subprocess(broken_cloud_init):
