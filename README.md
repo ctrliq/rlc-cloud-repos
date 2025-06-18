@@ -158,6 +158,27 @@ Mirror mapping is handled via a region → mirror YAML file (`ciq-mirrors.yaml`)
 Create branches off of `git@github.com:ctrliq/rlc-cloud-repos.git Branch: main`
 to develop PRs.
 
+### Testing
+
+Create and activate a virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install development dependencies:
+
+```bash
+make dev
+```
+
+Run tests:
+
+```bash
+make test
+```
+
 ---
 
 ## **License**
