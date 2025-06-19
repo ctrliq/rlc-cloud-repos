@@ -21,16 +21,15 @@ def test_aws_clears_dnf_vars(tmp_path):
     (var_dir / "baseurl1").write_text("original-value")
     (var_dir / "baseurl2").write_text("original-value")
     (var_dir / "product").write_text("rlc-9")
-    (var_dir / "variant").write_text("-h")
-    (var_dir / "contentdir").write_text("/files")
+    (var_dir / "cloudcontentdir").write_text("/files")
 
     configure_provider(var_dir, "aws", "https://foo1", "https://foo2")
 
-    for var in ["baseurl1", "baseurl2", "product", "variant", "contentdir"]:
+    for var in ["baseurl1", "baseurl2", "product", "cloudcontentdir"]:
         assert (var_dir / var).exists()
 
     assert (var_dir / "baseurl1").read_text().strip() == "https://foo1"
     assert (var_dir / "baseurl2").read_text().strip() == "https://foo2"
 
-    for var in ["product", "variant", "contentdir"]:
+    for var in ["product", "cloudcontentdir"]:
         assert (var_dir / var).read_text().strip() == ""

@@ -12,8 +12,8 @@ def configure_default(
     overwrite: Optional[bool] = True,
 ):
     """
-    Sets DNF variables for the primary and backup mirror URLs. Does not modify existing values for product, variant, or
-    contentdir
+    Sets DNF variables for the primary and backup mirror URLs. Does not modify existing values for product or
+    cloudcontentdir.
 
     Args:
         primary_url (str): Preferred mirror. backup_url (str): Fallback mirror. overwrite (bool): If True, overwrites
@@ -39,6 +39,5 @@ def configure_provider(
     """
     configure_default(basepath, primary_url, backup_url, overwrite)
 
-    if provider == "aws":
-
+    if provider.lower() == "aws":
         configure_aws(basepath, primary_url, backup_url, overwrite)
