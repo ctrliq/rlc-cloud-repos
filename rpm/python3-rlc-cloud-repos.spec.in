@@ -74,6 +74,9 @@ install -Dm0644 data/ciq-mirrors.yaml %{buildroot}/usr/share/rlc-cloud-repos/ciq
 rm -f /etc/rlc-cloud-repos/.configured
 
 %changelog
+* Thu Jun 19 2025 Joseph Tate <jtate@ciq.com> - 0.2.1-1
+- Re-release to write the cloudcontentdir var instead of contentdir
+
 * Wed Jun 11 2025 Joseph Tate <jtate@ciq.com> - 0.2.0-1
 - Switch AWS repositories for bucket mirrors
 - Support AWS bucket mirrors
