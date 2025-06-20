@@ -133,6 +133,7 @@ celerybeat.pid
 
 # Environments
 .env
+.secrets
 .venv
 env/
 venv/
@@ -186,6 +187,7 @@ cython_debug/
 # RPM build artifacts (engineer suggestion)
 *.rpm
 *.srpm
+*.spec
 rpmbuild/
 mockbuild/
 
