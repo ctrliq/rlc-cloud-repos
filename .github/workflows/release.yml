@@ -37,6 +37,9 @@ jobs:
           make sdist
           make dist
 
+      - name: Generate RPM spec file
+        run: make spec
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -45,3 +48,4 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.whl
+            dist/*.spec
