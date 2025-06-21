@@ -45,7 +45,8 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           TARBALL="rlc.cloud-repos-${VERSION}.tar.gz"
-          gh release download ${{ github.ref_name }} --pattern "$TARBALL" --pattern 'python3-rlc-cloud-repos.spec' --repo ${{ github.repository }}
+          mkdir -p /tmp/dist
+          gh release download ${{ github.ref_name }} --pattern "$TARBALL" --pattern 'python3-rlc-cloud-repos.spec' --repo ${{ github.repository }} --dir /tmp/dist
 
       # Comment out the above step and uncomment the following if you are testing locally using act
       - name: "Bypass: Copy local assets for testing"
