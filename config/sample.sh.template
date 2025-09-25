@@ -1,0 +1,156 @@
+#!/bin/bash
+#
+# RLC Cloud Repos Plugin Template
+#
+# This is a sample plugin script that demonstrates how to create custom
+# DNF variable configurations for specific cloud providers or regions.
+#
+# To use this template:
+# 1. Copy to /etc/rlc-cloud-repos/plugins.d/your-plugin.sh
+# 2. Make executable: chmod 755 /etc/rlc-cloud-repos/plugins.d/your-plugin.sh
+# 3. Customize the logic below for your needs
+# 4. Ensure the script is owned by root and not world-writable
+#
+# Plugin Contract:
+# - Input: Command line arguments for provider, region, and mirror URLs
+# - Output: Key=value pairs on stdout for DNF variables
+# - Exit: 0 for success, non-zero for failure
+#
+
+set -euo pipefail
+
+# Default values
+PROVIDER=""
+REGION=""
+PRIMARY_URL=""
+BACKUP_URL=""
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    --provider)
+        PROVIDER="$2"
+        shift 2
+        ;;
+    --region)
+        REGION="$2"
+        shift 2
+        ;;
+    --primary-url)
+        PRIMARY_URL="$2"
+        shift 2
+        ;;
+    --backup-url)
+        BACKUP_URL="$2"
+        shift 2
+        ;;
+    -h | --help)
+        echo "Usage: $0 --provider PROVIDER --region REGION --primary-url URL --backup-url URL"
+        echo ""
+        echo "Plugin for RLC Cloud Repos to set custom DNF variables"
+        echo ""
+        echo "Arguments:"
+        echo "  --provider      Cloud provider name (aws, azure, gcp, etc.)"
+        echo "  --region        Cloud region"
+        echo "  --primary-url   Primary mirror URL"
+        echo "  --backup-url    Backup mirror URL"
+        echo "  --help          Show this help message"
+        exit 0
+        ;;
+    *)
+        echo "Error: Unknown argument $1" >&2
+        echo "Use --help for usage information" >&2
+        exit 1
+        ;;
+    esac
+done
+
+# Validate required arguments
+if [[ -z "$PROVIDER" || -z "$REGION" || -z "$PRIMARY_URL" || -z "$BACKUP_URL" ]]; then
+    echo "Error: Missing required arguments" >&2
+    echo "Use --help for usage information" >&2
+    exit 1
+fi
+
+# Log to stderr (will be captured by the main application)
+echo "Sample plugin processing provider=$PROVIDER region=$REGION" >&2
+
+# Example: Set custom variables based on provider and region
+case "$PROVIDER" in
+aws)
+    case "$REGION" in
+    us-east-1)
+        # Example: Custom content directory for us-east-1
+        echo "repocloudcontentdir=us-east-1-content"
+        echo "custom_region_code=use1"
+        ;;
+    us-west-2)
+        # Example: Different content directory for us-west-2
+        echo "repocloudcontentdir=us-west-2-content"
+        echo "custom_region_code=usw2"
+        ;;
+    *)
+        # Default for other AWS regions
+        echo "repocloudcontentdir=default-aws-content"
+        echo "custom_region_code=aws-default"
+        ;;
+    esac
+
+    # AWS-specific variables
+    echo "aws_instance_type=unknown" # Could be detected via metadata
+    echo "provider_short=aws"
+    ;;
+
+azure)
+    # Azure-specific customizations
+    echo "repocloudcontentdir=azure-content"
+    echo "provider_short=az"
+    echo "custom_region_code=${REGION//-/}" # Remove dashes from region
+    ;;
+
+gcp)
+    # Google Cloud-specific customizations
+    echo "repocloudcontentdir=gcp-content"
+    echo "provider_short=gcp"
+    echo "custom_region_code=${REGION}"
+    ;;
+
+*)
+    # Default/unknown provider
+    echo "repocloudcontentdir=default-content"
+    echo "provider_short=unknown"
+    echo "custom_region_code=default"
+    ;;
+esac
+
+# Example: Set environment-specific variables
+if [[ -f /etc/environment-type ]]; then
+    ENV_TYPE=$(cat /etc/environment-type)
+    echo "environment_type=$ENV_TYPE"
+else
+    echo "environment_type=production"
+fi
+
+# Example: Set variables based on hostname patterns
+HOSTNAME=$(hostname -s)
+if [[ "$HOSTNAME" =~ ^web[0-9]+ ]]; then
+    echo "server_role=web"
+elif [[ "$HOSTNAME" =~ ^db[0-9]+ ]]; then
+    echo "server_role=database"
+else
+    echo "server_role=generic"
+fi
+
+# Example: Mirror URL transformations
+# (This is just an example - you might want to add custom parameters
+# or transform URLs based on your infrastructure)
+if [[ "$PRIMARY_URL" =~ ^https://mirrors\.example\.com ]]; then
+    echo "mirror_type=internal"
+    echo "custom_baseurl_suffix=/custom-path"
+else
+    echo "mirror_type=external"
+    echo "custom_baseurl_suffix="
+fi
+
+echo "Sample plugin completed successfully" >&2
+exit 0
