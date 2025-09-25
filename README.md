@@ -139,6 +139,64 @@ Mirror mapping is handled via a region → mirror YAML file (`ciq-mirrors.yaml`)
 - Mirror selection logic is data-driven via `ciq-mirrors.yaml`
 - Configuration persists indefinitely until removed/updated.
 
+### Plugin System for Repository Providers
+
+RLC Cloud Repos includes a plugin system designed for **repository owners and maintainers** who need to integrate non-standard or add-on DNF repositories with the cloud-aware repository configuration system.
+
+This system allows repository providers to:
+
+- Add custom DNF variables specific to their repository infrastructure
+- Integrate with cloud-aware repository selection without modifying core RLC code
+- Support repository-specific metadata or authentication requirements
+- Extend repository configurations based on cloud provider/region combinations
+
+#### Plugin Directory
+
+Repository plugins are shell scripts placed in `/etc/rlc-cloud-repos/plugins.d/` and must:
+
+- Have a `.sh` extension
+- Be executable (`chmod +x`)
+- Be owned by root
+- Not be world-writable
+
+#### Plugin Interface
+
+Plugins receive cloud metadata as command-line arguments:
+
+- `--provider` - Cloud provider name (aws, azure, gcp, etc.)
+- `--region` - Cloud region
+- `--primary-url` - Primary mirror URL selected by RLC
+- `--backup-url` - Backup mirror URL selected by RLC
+
+Repository plugins should output `key=value` pairs to stdout for any additional DNF variables needed by their repositories.
+
+#### Repository Integration Template
+
+A comprehensive plugin template with repository integration examples is available after package installation at:
+
+```
+/usr/share/doc/rlc-cloud-repos/sample.sh.template
+```
+
+Repository maintainers can use this template to create plugins that integrate their repositories with RLC's cloud-aware configuration.
+
+#### Example Repository Plugin Deployment
+
+```bash
+# Repository maintainers would typically distribute plugins via their RPM packages
+# which would install to /etc/rlc-cloud-repos/plugins.d/
+# Then set up a soft requirement (recommends) on python3-rlc-cloud-repos
+
+# For development/testing:
+sudo cp /usr/share/doc/rlc-cloud-repos/sample.sh.template \
+        /etc/rlc-cloud-repos/plugins.d/my-repo.sh
+
+# Make executable and customize for repository needs
+sudo chmod 755 /etc/rlc-cloud-repos/plugins.d/my-repo.sh
+```
+
+Plugins execute after core RLC repository configuration, allowing repository providers to layer additional DNF variables or repository-specific configurations on top of the base cloud-aware setup.
+
 ---
 
 ## Development Notes
