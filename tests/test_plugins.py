@@ -574,7 +574,3 @@ class TestConfigurePlugins(unittest.TestCase):
         # Should call run_plugins but not write any variables
         mock_run_plugins.assert_called_once()
         mock_write_dnf_var.assert_not_called()
-
-
-if __name__ == "__main__":
-    unittest.main()
