@@ -139,6 +139,86 @@ Mirror mapping is handled via a region → mirror YAML file (`ciq-mirrors.yaml`)
 - Mirror selection logic is data-driven via `ciq-mirrors.yaml`
 - Configuration persists indefinitely until removed/updated.
 
+### Plugin System for Repository Providers
+
+RLC Cloud Repos includes a plugin system designed for **repository owners and maintainers** who need to integrate non-standard or add-on DNF repositories with the cloud-aware repository configuration system.
+
+This system allows repository providers to:
+
+- Add custom DNF variables specific to their repository infrastructure
+- Integrate with cloud-aware repository selection without modifying core RLC code
+- Support repository-specific metadata or authentication requirements
+- Extend repository configurations based on cloud provider/region combinations
+
+#### Plugin Directory
+
+Repository plugins are shell scripts placed in `/etc/rlc-cloud-repos/plugins.d/` and must:
+
+- Have a `.sh` extension
+- Be executable (`chmod +x`)
+- Be owned by root
+- Not be world-writable
+
+#### Plugin Interface
+
+Plugins receive cloud metadata as command-line arguments:
+
+- `--provider` - Cloud provider name (aws, azure, gcp, etc.)
+- `--region` - Cloud region
+- `--primary-url` - Primary mirror URL selected by RLC
+- `--backup-url` - Backup mirror URL selected by RLC
+
+**Parameter Usage**: Plugins may use any or all of these parameters as needed. It's perfectly acceptable for a plugin to ignore parameters that aren't relevant to its functionality (e.g., a plugin that sets static variables regardless of provider or region).
+
+**Output Format**: Repository plugins should output `key=value` pairs to stdout for any additional DNF variables needed by their repositories.
+
+**Error Handling Contract**:
+
+- **Exit Code 0**: Success - Plugin executed successfully, any stdout output will be processed
+- **Exit Code > 0**: Error - Plugin failed, stdout output will be ignored
+- **stderr Output**: Error messages and logging - Will be captured and logged by RLC for debugging
+
+**Forward Compatibility Requirement**: Plugins must gracefully handle unknown command-line arguments without error. Future versions of RLC Cloud Repos may pass additional arguments, and plugins should ignore unrecognized options to maintain compatibility.
+
+#### Repository Integration Templates
+
+Two plugin templates are available after package installation to help repository maintainers integrate with RLC's cloud-aware configuration:
+
+**Simple Template** - Basic functionality:
+
+```
+/usr/share/doc/rlc-cloud-repos/simple.sh.template
+```
+
+**Complete Template** - Comprehensive examples with advanced features:
+
+```
+/usr/share/doc/rlc-cloud-repos/complete.sh.template
+```
+
+Repository maintainers can choose the appropriate template based on their integration needs.
+
+#### Example Repository Plugin Deployment
+
+```bash
+# Repository maintainers would typically distribute plugins via their RPM packages
+# which would install to /etc/rlc-cloud-repos/plugins.d/
+# Then set up a soft requirement (recommends) on python3-rlc-cloud-repos
+
+# For development/testing - use simple template:
+sudo cp /usr/share/doc/rlc-cloud-repos/simple.sh.template \
+        /etc/rlc-cloud-repos/plugins.d/my-repo.sh
+
+# Or use complete template for advanced features:
+sudo cp /usr/share/doc/rlc-cloud-repos/complete.sh.template \
+        /etc/rlc-cloud-repos/plugins.d/my-repo.sh
+
+# Make executable and customize for repository needs
+sudo chmod 755 /etc/rlc-cloud-repos/plugins.d/my-repo.sh
+```
+
+Plugins execute after core RLC repository configuration, allowing repository providers to layer additional DNF variables or repository-specific configurations on top of the base cloud-aware setup.
+
 ---
 
 ## Development Notes
@@ -189,5 +269,5 @@ make test
 
 ## **Authors**
 
-**CIQ Solutions Delivery Engineering Team**
+**CIQ Automation and Delivery Team**
 [https://github.com/ctrliq/rlc-cloud-repos](https://github.com/ctrliq/rlc-cloud-repos)

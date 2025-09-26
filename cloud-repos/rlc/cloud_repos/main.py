@@ -17,6 +17,7 @@ from typing import Optional
 from rlc.cloud_repos import __version__ as rlc_version
 from rlc.cloud_repos.cloud_metadata import get_cloud_metadata
 from rlc.cloud_repos.log_utils import logger, setup_logging
+from rlc.cloud_repos.plugins import configure_plugins
 from rlc.cloud_repos.providers import configure_provider
 from rlc.cloud_repos.repo_config import load_mirror_map, select_mirror
 
@@ -90,6 +91,9 @@ def _configure_repos(
     # Set DNF vars
     vars_dir = Path(DNF_VARS_DIR)
     configure_provider(vars_dir, provider, primary_url, backup_url, overwrite)
+
+    # Run plugins for additional customizations
+    configure_plugins(vars_dir, provider, region, primary_url, backup_url, overwrite)
 
     # Create marker file to prevent future reruns
     write_touchfile()

@@ -200,3 +200,10 @@ scripts.local
 .replit
 .cache
 .pythonlibs
+
+# TS stuff for an experiment
+*.ts
+depot-prod-mirrors.yaml
+tsconfig.json
+package.json
+package-lock.json
