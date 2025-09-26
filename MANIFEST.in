@@ -1,3 +1,3 @@
 include data/*.yaml
 include config/*.cfg
-include config/*.template
+include docs/*.template

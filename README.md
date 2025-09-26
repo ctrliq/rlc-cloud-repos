@@ -168,17 +168,35 @@ Plugins receive cloud metadata as command-line arguments:
 - `--primary-url` - Primary mirror URL selected by RLC
 - `--backup-url` - Backup mirror URL selected by RLC
 
-Repository plugins should output `key=value` pairs to stdout for any additional DNF variables needed by their repositories.
+**Parameter Usage**: Plugins may use any or all of these parameters as needed. It's perfectly acceptable for a plugin to ignore parameters that aren't relevant to its functionality (e.g., a plugin that sets static variables regardless of provider or region).
 
-#### Repository Integration Template
+**Output Format**: Repository plugins should output `key=value` pairs to stdout for any additional DNF variables needed by their repositories.
 
-A comprehensive plugin template with repository integration examples is available after package installation at:
+**Error Handling Contract**:
+
+- **Exit Code 0**: Success - Plugin executed successfully, any stdout output will be processed
+- **Exit Code > 0**: Error - Plugin failed, stdout output will be ignored
+- **stderr Output**: Error messages and logging - Will be captured and logged by RLC for debugging
+
+**Forward Compatibility Requirement**: Plugins must gracefully handle unknown command-line arguments without error. Future versions of RLC Cloud Repos may pass additional arguments, and plugins should ignore unrecognized options to maintain compatibility.
+
+#### Repository Integration Templates
+
+Two plugin templates are available after package installation to help repository maintainers integrate with RLC's cloud-aware configuration:
+
+**Simple Template** - Basic functionality:
 
 ```
-/usr/share/doc/rlc-cloud-repos/sample.sh.template
+/usr/share/doc/rlc-cloud-repos/simple.sh.template
 ```
 
-Repository maintainers can use this template to create plugins that integrate their repositories with RLC's cloud-aware configuration.
+**Complete Template** - Comprehensive examples with advanced features:
+
+```
+/usr/share/doc/rlc-cloud-repos/complete.sh.template
+```
+
+Repository maintainers can choose the appropriate template based on their integration needs.
 
 #### Example Repository Plugin Deployment
 
@@ -187,8 +205,12 @@ Repository maintainers can use this template to create plugins that integrate th
 # which would install to /etc/rlc-cloud-repos/plugins.d/
 # Then set up a soft requirement (recommends) on python3-rlc-cloud-repos
 
-# For development/testing:
-sudo cp /usr/share/doc/rlc-cloud-repos/sample.sh.template \
+# For development/testing - use simple template:
+sudo cp /usr/share/doc/rlc-cloud-repos/simple.sh.template \
+        /etc/rlc-cloud-repos/plugins.d/my-repo.sh
+
+# Or use complete template for advanced features:
+sudo cp /usr/share/doc/rlc-cloud-repos/complete.sh.template \
         /etc/rlc-cloud-repos/plugins.d/my-repo.sh
 
 # Make executable and customize for repository needs
@@ -247,5 +269,5 @@ make test
 
 ## **Authors**
 
-**CIQ Solutions Delivery Engineering Team**
+**CIQ Automation and Delivery Team**
 [https://github.com/ctrliq/rlc-cloud-repos](https://github.com/ctrliq/rlc-cloud-repos)

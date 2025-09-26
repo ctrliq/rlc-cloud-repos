@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     -h | --help)
-        echo "Usage: $0 --provider PROVIDER --region REGION --primary-url URL --backup-url URL"
+        echo "Usage: $0 --provider PROVIDER --region REGION --primary-url URL --backup-url URL [additional options]"
         echo ""
         echo "Plugin for RLC Cloud Repos to set custom DNF variables"
         echo ""
@@ -55,17 +55,31 @@ while [[ $# -gt 0 ]]; do
         echo "  --primary-url   Primary mirror URL"
         echo "  --backup-url    Backup mirror URL"
         echo "  --help          Show this help message"
+        echo ""
+        echo "Note: This plugin ignores unknown arguments for forward compatibility."
+        echo "      Future versions of RLC Cloud Repos may pass additional arguments."
         exit 0
         ;;
+    --*)
+        # Ignore unknown options for forward compatibility
+        # Future versions may pass additional arguments
+        if [[ $# -gt 1 && ! "$2" =~ ^-- ]]; then
+            # Argument has a value, skip both
+            shift 2
+        else
+            # Argument has no value or next arg is another option
+            shift 1
+        fi
+        ;;
     *)
-        echo "Error: Unknown argument $1" >&2
-        echo "Use --help for usage information" >&2
-        exit 1
+        # Ignore unknown positional arguments
+        shift 1
         ;;
     esac
 done
 
-# Validate required arguments
+# Validate required arguments (only validate what you actually need)
+# Note: This example uses all parameters, but your plugin may not need all of them
 if [[ -z "$PROVIDER" || -z "$REGION" || -z "$PRIMARY_URL" || -z "$BACKUP_URL" ]]; then
     echo "Error: Missing required arguments" >&2
     echo "Use --help for usage information" >&2
@@ -74,6 +88,24 @@ fi
 
 # Log to stderr (will be captured by the main application)
 echo "Sample plugin processing provider=$PROVIDER region=$REGION" >&2
+
+# Alternative approach: Simple plugin that doesn't need all parameters
+# Uncomment the section below if you want a minimal plugin that ignores most parameters:
+#
+# # This plugin only cares about the provider, ignoring region and URLs
+# case "$PROVIDER" in
+#     aws)
+#         echo "repo_priority=100"
+#         ;;
+#     azure)
+#         echo "repo_priority=200"
+#         ;;
+#     *)
+#         echo "repo_priority=500"
+#         ;;
+# esac
+# echo "Plugin completed" >&2
+# exit 0
 
 # Example: Set custom variables based on provider and region
 case "$PROVIDER" in
@@ -123,10 +155,14 @@ gcp)
     ;;
 esac
 
-# Example: Set environment-specific variables
+# Example: Set environment-specific variables with error handling
 if [[ -f /etc/environment-type ]]; then
-    ENV_TYPE=$(cat /etc/environment-type)
-    echo "environment_type=$ENV_TYPE"
+    if ENV_TYPE=$(cat /etc/environment-type 2>/dev/null); then
+        echo "environment_type=$ENV_TYPE"
+    else
+        echo "Warning: Could not read /etc/environment-type" >&2
+        echo "environment_type=unknown"
+    fi
 else
     echo "environment_type=production"
 fi
@@ -153,4 +189,8 @@ else
 fi
 
 echo "Sample plugin completed successfully" >&2
+
+# Exit codes:
+# 0 = Success (output will be processed)
+# >0 = Error (output will be ignored, stderr logged)
 exit 0

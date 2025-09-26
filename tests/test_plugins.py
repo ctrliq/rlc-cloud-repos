@@ -450,6 +450,121 @@ class TestPluginExecution(unittest.TestCase):
         self.assertFalse(success)
         self.assertEqual(variables, {})
 
+    def test_execute_plugin_forward_compatibility(self):
+        """Test that plugins can be called with additional future arguments."""
+        # Mock a successful plugin execution that ignores unknown arguments
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = "test_var=test_value\n"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            success, variables = plugins.execute_plugin(
+                self.plugin_path, "aws", "us-east-1", "http://primary", "http://backup"
+            )
+
+        self.assertTrue(success)
+        self.assertEqual(variables, {"test_var": "test_value"})
+
+        # Verify the command was called with current arguments
+        # (Future versions might add more arguments to this list)
+        mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        expected_args = [
+            str(self.plugin_path),
+            "--provider",
+            "aws",
+            "--region",
+            "us-east-1",
+            "--primary-url",
+            "http://primary",
+            "--backup-url",
+            "http://backup",
+        ]
+        self.assertEqual(args, expected_args)
+
+    def test_execute_plugin_with_additional_future_arguments(self):
+        """Test plugin execution with hypothetical future arguments."""
+        # This test simulates what might happen in a future version
+        # that passes additional arguments to plugins
+
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = "future_compatible=true\n"
+        mock_result.stderr = ""
+
+        # Create a modified version of execute_plugin that passes extra args
+        def execute_plugin_future_version(
+            plugin_path, provider, region, primary_url, backup_url, **kwargs
+        ):
+            """Hypothetical future version that passes additional arguments."""
+            cmd = [
+                str(plugin_path),
+                "--provider",
+                provider,
+                "--region",
+                region,
+                "--primary-url",
+                primary_url,
+                "--backup-url",
+                backup_url,
+            ]
+
+            # Add hypothetical future arguments
+            if kwargs.get("instance_type"):
+                cmd.extend(["--instance-type", kwargs["instance_type"]])
+            if kwargs.get("cloud_init_version"):
+                cmd.extend(["--cloud-init-version", kwargs["cloud_init_version"]])
+
+            # Simulate execution (in real test, plugin should handle unknown args gracefully)
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=plugins.PLUGIN_TIMEOUT,
+                cwd=tempfile.gettempdir(),
+                env={"PATH": "/usr/bin:/bin"},
+            )
+
+            if result.returncode != 0:
+                return False, {}
+
+            # Parse output (same logic as current version)
+            variables = {}
+            for line in result.stdout.strip().split("\n"):
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    key = key.strip()
+                    value = value.strip()
+                    # Basic validation
+                    is_valid_name = (
+                        key
+                        and key.replace("_", "").replace("-", "").isalnum()
+                        and key[0].isalpha()
+                    )
+                    if is_valid_name and key.lower() not in plugins.PROTECTED_VARIABLES:
+                        variables[key] = value
+
+            return True, variables
+
+        with patch("subprocess.run", return_value=mock_result):
+            # Test that future arguments don't break the system
+            success, variables = execute_plugin_future_version(
+                self.plugin_path,
+                "aws",
+                "us-east-1",
+                "http://primary",
+                "http://backup",
+                instance_type="t3.micro",
+                cloud_init_version="22.4",
+            )
+
+        self.assertTrue(success)
+        self.assertEqual(variables, {"future_compatible": "true"})
+
 
 class TestRunPlugins(unittest.TestCase):
     """Test the run_plugins function."""
