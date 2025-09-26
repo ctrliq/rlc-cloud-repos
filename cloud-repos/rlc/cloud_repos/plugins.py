@@ -136,6 +136,8 @@ def execute_plugin(
         primary_url,
         "--backup-url",
         backup_url,
+        # Future versions may add additional arguments here
+        # Plugins should gracefully ignore unknown arguments for compatibility
     ]
 
     logger.info(f"Executing plugin: {plugin_path.name}")

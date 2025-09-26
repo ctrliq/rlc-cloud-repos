@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# Simple RLC Cloud Repos Plugin Template
+#
+# A minimal example plugin that demonstrates basic functionality
+# without the complexity of the complete template.
+#
+# To use this template:
+# 1. Copy to /etc/rlc-cloud-repos/plugins.d/your-plugin.sh
+# 2. Make executable: chmod 755 /etc/rlc-cloud-repos/plugins.d/your-plugin.sh
+# 3. Customize the logic below for your needs
+#
+
+set -euo pipefail
+
+# Default values
+PROVIDER=""
+REGION=""
+
+# Parse command line arguments (ignore unknown for forward compatibility)
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    --provider)
+        PROVIDER="$2"
+        shift 2
+        ;;
+    --region)
+        REGION="$2"
+        shift 2
+        ;;
+    -h | --help)
+        echo "Usage: $0 --provider PROVIDER --region REGION [other options]"
+        echo ""
+        echo "Simple plugin example for RLC Cloud Repos"
+        exit 0
+        ;;
+    --*)
+        # Ignore unknown options for forward compatibility
+        if [[ $# -gt 1 && ! "$2" =~ ^-- ]]; then
+            shift 2
+        else
+            shift 1
+        fi
+        ;;
+    *)
+        # Ignore unknown positional arguments
+        shift 1
+        ;;
+    esac
+done
+
+# Simple provider-based configuration
+case "$PROVIDER" in
+aws)
+    echo "repo_priority=100"
+    echo "provider_short=aws"
+    ;;
+azure)
+    echo "repo_priority=200"
+    echo "provider_short=az"
+    ;;
+gcp)
+    echo "repo_priority=300"
+    echo "provider_short=gcp"
+    ;;
+*)
+    echo "repo_priority=500"
+    echo "provider_short=unknown"
+    ;;
+esac
+
+# Set a simple custom variable
+echo "plugin_example=simple"
+
+echo "Simple plugin completed" >&2
+exit 0
