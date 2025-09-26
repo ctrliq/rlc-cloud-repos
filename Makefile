@@ -7,7 +7,7 @@ RPM_PACKAGE := python3-rlc-cloud-repos
 distdir := dist
 PIP ?= pip
 
-.PHONY: install clean test lint dist rpm spec dev mock test-version
+.PHONY: install clean test lint format dist rpm spec dev mock test-version
 
 test-version:
 	@echo "Testing VERSION is non-empty..."
@@ -52,6 +52,11 @@ lint:
 	black --check cloud-repos framework tests || black --diff cloud-repos framework tests
 	isort --check-only cloud-repos framework tests
 	flake8 cloud-repos framework tests
+
+format:
+	@echo "🎨 Formatting code..."
+	black cloud-repos framework tests
+	isort cloud-repos framework tests
 
 clean:
 	@echo "🦚 Cleaning build artifacts..."
