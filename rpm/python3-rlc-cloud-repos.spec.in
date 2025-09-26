@@ -49,7 +49,7 @@ rm -rf %{buildroot}%{_prefix}/config %{buildroot}%{_prefix}/data %{buildroot}%{_
 
 %files -f %{pyproject_files}
 %license LICENSE
-%doc README.md
+%doc README.md CONTRIBUTING.md COMMUNITY.md SECURITY.md
 
 # CLI entrypoint (console script)
 %{_bindir}/rlc-cloud-repos
