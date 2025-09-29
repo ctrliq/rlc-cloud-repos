@@ -1,11 +1,14 @@
-VERSION := $(shell python -m 'rlc.cloud_repos' 2>/dev/null)
+# Python and pip detection - can be overridden via environment
+PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python 2>/dev/null || echo python3)
+PIP ?= $(shell command -v pip3 2>/dev/null || command -v pip 2>/dev/null || echo pip)
+
+VERSION := $(shell $(PYTHON) -m 'rlc.cloud_repos' 2>/dev/null)
 $(info "VERSION: $(VERSION)")
 
 PACKAGE := rlc.cloud-repos
 PY_PACKAGE := rlc.cloud_repos
 RPM_PACKAGE := python3-rlc-cloud-repos
 distdir := dist
-PIP ?= pip
 
 .PHONY: install clean test lint format dist rpm spec dev mock test-version
 
@@ -33,17 +36,17 @@ dev:
 
 install:
 	@echo "🔧 Installing $(PACKAGE) globally..."
-	$(PIP) install --root=/ --prefix=/usr -e .
+	$(PIP) install .
 
 $(distdir)/$(PY_PACKAGE)-$(VERSION)-py3-none-any.whl: setup.cfg setup.py MANIFEST.in $(shell find cloud-repos -name '*.py') config/* data/*
 	@echo "🛞 Building wheel..."
-	python3 -m build --wheel
+	$(PYTHON) -m build --wheel
 
 dist: test-version $(distdir)/$(PY_PACKAGE)-$(VERSION)-py3-none-any.whl
 
 $(distdir)/$(PACKAGE)-$(VERSION).tar.gz: setup.cfg setup.py MANIFEST.in $(shell find cloud-repos -name '*.py') config/* data/*
 	@echo "📦 Building source distribution..."
-	python3 -m build --sdist
+	$(PYTHON) -m build --sdist
 
 sdist: test-version $(distdir)/$(PACKAGE)-$(VERSION).tar.gz
 
@@ -97,7 +100,6 @@ mock: test-version spec sdist
 	mock -r $(MOCK_CONFIG) $(MOCK_OPTS) --resultdir=$(distdir) --enable-network --sources $(distdir)/rpm/SOURCES --spec $(distdir)/rpm/SPECS/$(RPM_PACKAGE).spec
 
 # Testing
-PYTHON ?= python3
 PYTHONPATH := src
 PYTHON_VERSION ?= 3.11
 
@@ -106,12 +108,12 @@ PYTHON_VERSION ?= 3.11
 sdist-podman:
 	@echo "🐋 Building source distribution in Podman container with Python 3.6..."
 	podman pull docker.io/library/python:3.6
-	podman run --rm -v .:/app:Z -w /app python:3.6 bash -c "make dev && make sdist"
+	podman run --rm --security-opt label=disable -v .:/app -w /app python:3.6 bash -c "make dev && make sdist"
 
 test-podman:
 	@echo "🐋 Running tests in Podman container with Python $(PYTHON_VERSION)..."
 	podman pull docker.io/library/python:$(PYTHON_VERSION)
-	podman run --rm -v .:/app:Z -w /app python:$(PYTHON_VERSION) bash -c \
+	podman run --rm --security-opt label=disable -v .:/app -w /app python:$(PYTHON_VERSION) bash -c \
 		"python -m pip install --upgrade pip setuptools && make dev && python -m pytest --cov --cov-report=term-missing"
 
 test:
