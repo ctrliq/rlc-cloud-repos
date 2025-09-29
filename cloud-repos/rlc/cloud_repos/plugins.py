@@ -64,11 +64,18 @@ def is_safe_plugin(plugin_path: Path) -> bool:
             logger.warning(f"Plugin {plugin_path} is not executable")
             return False
 
-        # Basic shebang check
-        with open(plugin_path, "rb") as f:
-            first_line = f.readline()
-            if not first_line.startswith(b"#!"):
-                logger.warning(f"Plugin {plugin_path} missing shebang")
+        # Check if file should be ignored based on suffix patterns
+        name_lower = plugin_path.name.lower()
+        parts = name_lower.split(".")
+        if len(parts) > 1:
+            suffix = "." + parts[-1]
+            # Patterns that match by prefix
+            if suffix.startswith((".ignore", ".disable", ".rpm")):
+                logger.debug(f"Plugin {plugin_path} ignored due to suffix: {suffix}")
+                return False
+            # Exact matches
+            if suffix in (".bak", ".backup"):
+                logger.debug(f"Plugin {plugin_path} ignored due to suffix: {suffix}")
                 return False
 
         return True
@@ -95,14 +102,14 @@ def discover_plugins() -> List[Path]:
         logger.warning(f"Plugins path {PLUGINS_DIR} is not a directory")
         return []
 
-    # Find all .sh files
+    # Find all files (not directories)
     plugins = []
     try:
-        for plugin_file in plugins_path.glob("*.sh"):
-            if is_safe_plugin(plugin_file):
+        for plugin_file in plugins_path.iterdir():
+            if plugin_file.is_file() and is_safe_plugin(plugin_file):
                 plugins.append(plugin_file)
                 logger.debug(f"Discovered safe plugin: {plugin_file}")
-            else:
+            elif plugin_file.is_file():
                 logger.warning(f"Skipping unsafe plugin: {plugin_file}")
     except Exception as e:
         logger.warning(f"Error discovering plugins: {e}")

@@ -146,31 +146,42 @@ RLC Cloud Repos includes a plugin system designed for **repository owners and ma
 This system allows repository providers to:
 
 - Add custom DNF variables specific to their repository infrastructure
-- Integrate with cloud-aware repository selection without modifying core RLC code
+- Integrate with cloud-aware repository selection without modifying core RLC Cloud Repos code
 - Support repository-specific metadata or authentication requirements
 - Extend repository configurations based on cloud provider/region combinations
 
 #### Plugin Directory
 
-Repository plugins are shell scripts placed in `/etc/rlc-cloud-repos/plugins.d/` and must:
+Repository plugins are executable files placed in `/etc/rlc-cloud-repos/plugins.d/` and must:
 
-- Have a `.sh` extension
 - Be executable (`chmod +x`)
 - Be owned by root
 - Not be world-writable
+- Not end with ignore patterns: `.ignore*`, `.disable*`, `.bak`, `.backup`, `.rpm*`
+
+Plugins can be written in any language (shell, Python, Perl, Go, etc.) as long as they are executable.
 
 #### Plugin Interface
 
-Plugins receive cloud metadata as command-line arguments:
+Plugins receive cloud metadata as command-line arguments, defined currently as:
 
 - `--provider` - Cloud provider name (aws, azure, gcp, etc.)
 - `--region` - Cloud region
 - `--primary-url` - Primary mirror URL selected by RLC
 - `--backup-url` - Backup mirror URL selected by RLC
 
-**Parameter Usage**: Plugins may use any or all of these parameters as needed. It's perfectly acceptable for a plugin to ignore parameters that aren't relevant to its functionality (e.g., a plugin that sets static variables regardless of provider or region).
+**Parameter Usage**: Plugins may use any or none of the defined parameters, but must accept all unrecognized and unused parameters without erroring. Unrecognized parameters must be ignored.
 
 **Output Format**: Repository plugins should output `key=value` pairs to stdout for any additional DNF variables needed by their repositories.
+
+**Protected Variables**: Plugins cannot override the following core DNF variables managed by RLC Cloud Repos:
+- `baseurl1` - Primary mirror URL
+- `baseurl2` - Backup mirror URL
+- `contentdir` - Content directory path
+- `product` - Product identifier
+- `cloudcontentdir` - Cloud content directory path
+
+Attempts to set these variables will be ignored and logged as warnings.
 
 **Error Handling Contract**:
 
@@ -206,11 +217,11 @@ Repository maintainers can choose the appropriate template based on their integr
 # Then set up a soft requirement (recommends) on python3-rlc-cloud-repos
 
 # For development/testing - use simple template:
-sudo cp /usr/share/doc/rlc-cloud-repos/simple.sh.template \
+sudo cp /usr/share/doc/python3-rlc-cloud-repos/simple.sh.template \
         /etc/rlc-cloud-repos/plugins.d/my-repo.sh
 
 # Or use complete template for advanced features:
-sudo cp /usr/share/doc/rlc-cloud-repos/complete.sh.template \
+sudo cp /usr/share/doc/python3-rlc-cloud-repos/complete.sh.template \
         /etc/rlc-cloud-repos/plugins.d/my-repo.sh
 
 # Make executable and customize for repository needs
