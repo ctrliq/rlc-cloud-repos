@@ -67,8 +67,12 @@ class TestPluginDiscovery(unittest.TestCase):
     def test_discover_plugins_filters_valid_plugins(self, mock_plugins_dir):
         """Test that discover_plugins only returns plugins that pass is_safe_plugin."""
         mock_plugins_dir.__str__ = Mock(return_value=str(self.plugins_dir))
-        valid_plugin = Path("/test/valid.sh")
-        invalid_plugin = Path("/test/invalid.sh")
+        valid_plugin = Mock()
+        valid_plugin.is_file.return_value = True
+        invalid_plugin = Mock()
+        invalid_plugin.is_file.return_value = True
+        directory = Mock()
+        directory.is_file.return_value = False
 
         with patch("rlc.cloud_repos.plugins.Path") as mock_path, patch(
             "rlc.cloud_repos.plugins.is_safe_plugin"
@@ -76,7 +80,11 @@ class TestPluginDiscovery(unittest.TestCase):
             mock_plugins_path = Mock()
             mock_plugins_path.exists.return_value = True
             mock_plugins_path.is_dir.return_value = True
-            mock_plugins_path.glob.return_value = [valid_plugin, invalid_plugin]
+            mock_plugins_path.iterdir.return_value = [
+                valid_plugin,
+                invalid_plugin,
+                directory,
+            ]
             mock_path.return_value = mock_plugins_path
 
             # Only valid_plugin passes safety check
@@ -91,9 +99,21 @@ class TestPluginDiscovery(unittest.TestCase):
         """Test that discover_plugins returns results sorted by name."""
         mock_plugins_dir.__str__ = Mock(return_value=str(self.plugins_dir))
 
-        plugin_z = Path("/test/z.sh")
-        plugin_a = Path("/test/a.sh")
-        plugin_m = Path("/test/m.sh")
+        # Create mock plugins with sortable names
+        plugin_z = Mock()
+        plugin_z.is_file.return_value = True
+        plugin_z.name = "z.sh"
+        plugin_z.__lt__ = lambda self, other: self.name < other.name
+
+        plugin_a = Mock()
+        plugin_a.is_file.return_value = True
+        plugin_a.name = "a.sh"
+        plugin_a.__lt__ = lambda self, other: self.name < other.name
+
+        plugin_m = Mock()
+        plugin_m.is_file.return_value = True
+        plugin_m.name = "m.sh"
+        plugin_m.__lt__ = lambda self, other: self.name < other.name
 
         with patch("rlc.cloud_repos.plugins.Path") as mock_path, patch(
             "rlc.cloud_repos.plugins.is_safe_plugin", return_value=True
@@ -101,7 +121,7 @@ class TestPluginDiscovery(unittest.TestCase):
             mock_plugins_path = Mock()
             mock_plugins_path.exists.return_value = True
             mock_plugins_path.is_dir.return_value = True
-            mock_plugins_path.glob.return_value = [plugin_z, plugin_a, plugin_m]
+            mock_plugins_path.iterdir.return_value = [plugin_z, plugin_a, plugin_m]
             mock_path.return_value = mock_plugins_path
 
             result = plugins.discover_plugins()
@@ -111,21 +131,21 @@ class TestPluginDiscovery(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch("rlc.cloud_repos.plugins.PLUGINS_DIR")
-    def test_discover_plugins_only_processes_sh_files(self, mock_plugins_dir):
-        """Test that discover_plugins only processes .sh files via glob pattern."""
+    def test_discover_plugins_processes_all_files(self, mock_plugins_dir):
+        """Test that discover_plugins processes all files in directory."""
         mock_plugins_dir.__str__ = Mock(return_value=str(self.plugins_dir))
 
         with patch("rlc.cloud_repos.plugins.Path") as mock_path:
             mock_plugins_path = Mock()
             mock_plugins_path.exists.return_value = True
             mock_plugins_path.is_dir.return_value = True
-            mock_plugins_path.glob.return_value = []
+            mock_plugins_path.iterdir.return_value = []
             mock_path.return_value = mock_plugins_path
 
             plugins.discover_plugins()
 
-        # Verify glob was called with *.sh pattern
-        mock_plugins_path.glob.assert_called_once_with("*.sh")
+        # Verify iterdir was called to get all files
+        mock_plugins_path.iterdir.assert_called_once()
 
     @patch("rlc.cloud_repos.plugins.PLUGINS_DIR")
     def test_discover_plugins_glob_exception(self, mock_plugins_dir):
@@ -149,7 +169,9 @@ class TestPluginDiscovery(unittest.TestCase):
         plugin_file.write_text("#!/bin/bash\necho test")
         plugin_file.chmod(0o755)
 
-        with patch("os.stat") as mock_stat, patch("os.access", return_value=True):
+        with patch("pathlib.Path.stat") as mock_stat, patch(
+            "os.access", return_value=True
+        ):
             mock_stat_result = Mock()
             mock_stat_result.st_uid = 0
             mock_stat_result.st_mode = stat.S_IFREG | 0o755
@@ -165,7 +187,9 @@ class TestPluginDiscovery(unittest.TestCase):
         plugin_file.write_text("#!/bin/bash\necho test")
         plugin_file.chmod(0o777)
 
-        with patch("os.stat") as mock_stat, patch("os.access", return_value=True):
+        with patch("pathlib.Path.stat") as mock_stat, patch(
+            "os.access", return_value=True
+        ):
             mock_stat_result = Mock()
             mock_stat_result.st_uid = 0
             mock_stat_result.st_mode = stat.S_IFREG | 0o777
@@ -181,7 +205,9 @@ class TestPluginDiscovery(unittest.TestCase):
         plugin_file.write_text("#!/bin/bash\necho test")
         plugin_file.chmod(0o755)
 
-        with patch("os.stat") as mock_stat, patch("os.access", return_value=True):
+        with patch("pathlib.Path.stat") as mock_stat, patch(
+            "os.access", return_value=True
+        ):
             mock_stat_result = Mock()
             mock_stat_result.st_uid = 1000  # non-root
             mock_stat_result.st_mode = stat.S_IFREG | 0o755
@@ -197,7 +223,9 @@ class TestPluginDiscovery(unittest.TestCase):
         plugin_file.write_text("#!/bin/bash\necho test")
         plugin_file.chmod(0o644)
 
-        with patch("os.stat") as mock_stat, patch("os.access", return_value=False):
+        with patch("pathlib.Path.stat") as mock_stat, patch(
+            "os.access", return_value=False
+        ):
             mock_stat_result = Mock()
             mock_stat_result.st_uid = 0
             mock_stat_result.st_mode = stat.S_IFREG | 0o644
@@ -207,29 +235,69 @@ class TestPluginDiscovery(unittest.TestCase):
 
         self.assertFalse(result)
 
-    def test_is_safe_plugin_no_shebang(self):
-        """Test plugin validation rejects files without shebang."""
-        plugin_file = self.plugins_dir / "test.sh"
-        plugin_file.write_text("echo test")  # no shebang
-        plugin_file.chmod(0o755)
+    def test_is_safe_plugin_ignores_disabled_files(self):
+        """Test plugin validation ignores files with disable patterns."""
+        disabled_files = [
+            "test.disabled",
+            "test.ignore",
+            "test.bak",
+            "test.rpmnew",
+            "test.backup",
+        ]
 
-        with patch("os.stat") as mock_stat, patch("os.access", return_value=True):
-            mock_stat_result = Mock()
-            mock_stat_result.st_uid = 0
-            mock_stat_result.st_mode = stat.S_IFREG | 0o755
-            mock_stat.return_value = mock_stat_result
+        for filename in disabled_files:
+            plugin_file = self.plugins_dir / filename
+            plugin_file.write_text("#!/bin/bash\necho test")
+            plugin_file.chmod(0o755)
 
-            result = plugins.is_safe_plugin(plugin_file)
+            with patch("pathlib.Path.stat") as mock_stat, patch(
+                "os.access", return_value=True
+            ):
+                mock_stat_result = Mock()
+                mock_stat_result.st_uid = 0
+                mock_stat_result.st_mode = stat.S_IFREG | 0o755
+                mock_stat.return_value = mock_stat_result
 
-        self.assertFalse(result)
+                result = plugins.is_safe_plugin(plugin_file)
+
+            self.assertFalse(result, f"File {filename} should be ignored")
+
+    def test_is_safe_plugin_accepts_various_extensions(self):
+        """Test plugin validation accepts files with various extensions and no extension."""
+        valid_files = [
+            "plugin-shell",  # no extension
+            "plugin.py",  # Python
+            "plugin.pl",  # Perl
+            "plugin.go",  # Go binary
+            "plugin.rb",  # Ruby
+        ]
+
+        for filename in valid_files:
+            plugin_file = self.plugins_dir / filename
+            plugin_file.write_text("#!/bin/bash\necho test")
+            plugin_file.chmod(0o755)
+
+            with patch("pathlib.Path.stat") as mock_stat, patch(
+                "os.access", return_value=True
+            ):
+                mock_stat_result = Mock()
+                mock_stat_result.st_uid = 0
+                mock_stat_result.st_mode = stat.S_IFREG | 0o755
+                mock_stat.return_value = mock_stat_result
+
+                result = plugins.is_safe_plugin(plugin_file)
+
+            self.assertTrue(result, f"File {filename} should be accepted")
 
     def test_is_safe_plugin_empty_file(self):
-        """Test plugin validation rejects empty files."""
+        """Test plugin validation accepts empty files (content doesn't matter)."""
         plugin_file = self.plugins_dir / "test.sh"
         plugin_file.write_text("")  # empty file
         plugin_file.chmod(0o755)
 
-        with patch("os.stat") as mock_stat, patch("os.access", return_value=True):
+        with patch("pathlib.Path.stat") as mock_stat, patch(
+            "os.access", return_value=True
+        ):
             mock_stat_result = Mock()
             mock_stat_result.st_uid = 0
             mock_stat_result.st_mode = stat.S_IFREG | 0o755
@@ -237,7 +305,7 @@ class TestPluginDiscovery(unittest.TestCase):
 
             result = plugins.is_safe_plugin(plugin_file)
 
-        self.assertFalse(result)
+        self.assertTrue(result)
 
     def test_is_safe_plugin_not_regular_file(self):
         """Test plugin validation rejects non-regular files (directories, symlinks)."""
@@ -248,15 +316,15 @@ class TestPluginDiscovery(unittest.TestCase):
         result = plugins.is_safe_plugin(plugin_dir)
         self.assertFalse(result)
 
-    def test_is_safe_plugin_file_read_error(self):
-        """Test plugin validation handles file read errors gracefully."""
+    def test_is_safe_plugin_access_check_error(self):
+        """Test plugin validation handles os.access errors gracefully."""
         plugin_file = self.plugins_dir / "test.sh"
         plugin_file.write_text("#!/bin/bash\necho test")
         plugin_file.chmod(0o755)
 
-        # Mock successful stat but failing file read
-        with patch("os.stat") as mock_stat, patch(
-            "builtins.open", side_effect=PermissionError("Access denied")
+        # Mock successful stat but failing access check
+        with patch("pathlib.Path.stat") as mock_stat, patch(
+            "os.access", side_effect=OSError("Access check failed")
         ):
             mock_stat_result = Mock()
             mock_stat_result.st_uid = 0  # root
@@ -527,14 +595,14 @@ class TestPluginExecution(unittest.TestCase):
             )
 
             if result.returncode != 0:
-                return False, {}
+                return False, {}  # pragma: no cover
 
             # Parse output (same logic as current version)
             variables = {}
             for line in result.stdout.strip().split("\n"):
                 line = line.strip()
                 if not line or line.startswith("#"):
-                    continue
+                    continue  # pragma: no cover
                 if "=" in line:
                     key, value = line.split("=", 1)
                     key = key.strip()
