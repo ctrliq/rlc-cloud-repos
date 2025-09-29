@@ -15,8 +15,13 @@ URL:            https://ciq.com/
 Source0:        %{pypi_name}-%{version}.tar.gz
 
 BuildArch:      noarch
+BuildRequires:  python%{python3_pkgversion}-setuptools
 BuildRequires:  python%{python3_pkgversion}-devel
-BuildRequires:  pyproject-rpm-macros
+
+%if 0%{?build_wheel}
+BuildRequires:  python%{python3_pkgversion}-pip
+BuildRequires:  python%{python3_pkgversion}-wheel
+%endif
 
 Requires:       python%{python3_pkgversion}-PyYAML
 Requires:       cloud-init
@@ -27,34 +32,40 @@ Installs a utility plus cloud-init configuration to run the utility on first and
 %prep
 %setup -q -n %{pypi_name}-%{version}
 
-%generate_buildrequires
-%pyproject_buildrequires
-
 %build
-%pyproject_wheel
+%if 0%{?build_wheel}
+%py3_build_wheel
+%else
+%py3_build
+%endif
 
 %install
-%pyproject_install
-%pyproject_save_files rlc
 
-# Move files from Python data dirs to proper system locations
+%if 0%{?build_wheel}
+%py3_install_wheel %{python_wheelname}
+%else
+%py3_install
+%endif
+
+rm %{buildroot}%{_prefix}/config/20_rlc-cloud-repos.cfg
+rm %{buildroot}%{_prefix}/data/ciq-mirrors.yaml
+rm %{buildroot}%{_prefix}/docs/*.template
 mkdir -p %{buildroot}%{_sysconfdir}/rlc-cloud-repos/plugins.d
-install -Dm0644 %{buildroot}%{_prefix}/config/20_rlc-cloud-repos.cfg %{buildroot}/etc/cloud/cloud.cfg.d/20_rlc-cloud-repos.cfg
-install -Dm0644 %{buildroot}%{_prefix}/data/ciq-mirrors.yaml %{buildroot}/usr/share/rlc-cloud-repos/ciq-mirrors.yaml
 mkdir -p %{buildroot}%{_docdir}/%{name}
-cp %{buildroot}%{_prefix}/docs/*.template %{buildroot}%{_docdir}/%{name}/
+install -Dm0644 config/20_rlc-cloud-repos.cfg %{buildroot}/etc/cloud/cloud.cfg.d/20_rlc-cloud-repos.cfg
+install -Dm0644 data/ciq-mirrors.yaml %{buildroot}/usr/share/rlc-cloud-repos/ciq-mirrors.yaml
+cp docs/*.template %{buildroot}%{_docdir}/%{name}/
 
-# Clean up Python-installed data files since we moved them to system locations
-rm -rf %{buildroot}%{_prefix}/config %{buildroot}%{_prefix}/data %{buildroot}%{_prefix}/docs
-
-%files -f %{pyproject_files}
+%files
 %license LICENSE
 %doc README.md CONTRIBUTING.md COMMUNITY.md SECURITY.md
 
 # CLI entrypoint (console script)
 %{_bindir}/rlc-cloud-repos
 
-# Namespace package file
+# Python package content
+%{python3_sitelib}/rlc/
+%{python3_sitelib}/rlc.cloud_repos*.dist-info
 %{python3_sitelib}/rlc.cloud_repos-*.pth
 
 # Config and static data
