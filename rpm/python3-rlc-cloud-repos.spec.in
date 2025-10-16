@@ -79,6 +79,10 @@ cp docs/*.template %{buildroot}%{_docdir}/%{name}/
 rm -f /etc/rlc-cloud-repos/.configured
 
 %changelog
+* Thu Oct 16 2025 Joseph Tate <jtate@ciq.com> - 0.3.0-1
+- First public release
+- Add a plugin system for extending per-cloud variable settings for add-on repositories
+
 * Thu Jun 19 2025 Joseph Tate <jtate@ciq.com> - 0.2.1-1
 - Re-release to write the cloudcontentdir var instead of contentdir
 
