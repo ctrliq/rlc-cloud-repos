@@ -100,8 +100,6 @@ gcp:
   default: *azure_eastus
 
 oracle:
-  default:
-    primary: https://depot.eastus.prod.azure.ciq.com
-    backup: https://depot.eastus.prod.azure.ciq.com
+  default: *azure_eastus
 
 default: *azure_eastus
