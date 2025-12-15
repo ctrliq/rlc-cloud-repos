@@ -16,14 +16,14 @@ jobs:
     strategy:
       matrix:
         # Rocky 8 is on 3.6, Rocky 9 on 3.9. Plus some future proofing.
-        python-version: ["3.6", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.6", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     runs-on: ubuntu-latest
     container: python:${{ matrix.python-version }}
 
     steps:
       - name: Set up a comment for coverage output
-        if: matrix.python-version == '3.13' && github.event_name == 'pull_request'
+        if: matrix.python-version == '3.14' && github.event_name == 'pull_request'
         uses: peter-evans/find-comment@v3
         id: fc
         with:
@@ -40,7 +40,7 @@ jobs:
 
       - name: Run linters
         # Only run linters on the highest Python version to avoid conflicts
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
         run: |
           make lint
 
@@ -62,9 +62,9 @@ jobs:
           </details>
           EOF
 
-      # Only handle coverage reporting from Python 3.13 run
+      # Only handle coverage reporting from Python 3.14 run
       - name: Upload coverage report
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -72,7 +72,7 @@ jobs:
           if-no-files-found: error
 
       - name: Comment test output on PR
-        if: matrix.python-version == '3.13' && github.event_name == 'pull_request'
+        if: matrix.python-version == '3.14' && github.event_name == 'pull_request'
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
