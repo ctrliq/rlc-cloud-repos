@@ -76,23 +76,23 @@ aws:
 azure:
   eastus: &azure_eastus
     primary: https://depot.eastus.prod.azure.ciq.com
-    backup: https://depot.westus2.prod.azure.ciq.com
-
-  australiaeast:
-    primary: https://depot.australiaeast.prod.azure.ciq.com
     backup: https://depot.southeastasia.prod.azure.ciq.com
 
+  australiaeast:
+    primary: https://depot.southeastasia.prod.azure.ciq.com
+    backup: https://depot.eastus.prod.azure.ciq.com
+
   northeurope:
-    primary: https://depot.northeurope.prod.azure.ciq.com
+    primary: https://depot.eastus.prod.azure.ciq.com
     backup: https://depot.southeastasia.prod.azure.ciq.com
 
   southeastasia:
     primary: https://depot.southeastasia.prod.azure.ciq.com
-    backup: https://depot.northeurope.prod.azure.ciq.com
+    backup: https://depot.eastus.prod.azure.ciq.com
 
   westus2:
-    primary: https://depot.westus2.prod.azure.ciq.com
-    backup: https://depot.eastus.prod.azure.ciq.com
+    primary: https://depot.eastus.prod.azure.ciq.com
+    backup: https://depot.southeastasia.prod.azure.ciq.com
 
   default: *azure_eastus
 
