@@ -31,7 +31,7 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: Test summary
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Install dependencies
         run: |
@@ -65,7 +65,7 @@ jobs:
       # Only handle coverage reporting from Python 3.14 run
       - name: Upload coverage report
         if: matrix.python-version == '3.14'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: coverage-report
           path: htmlcov
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3.6
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Install dependencies and build source
         run: |
@@ -93,7 +93,7 @@ jobs:
           make spec sdist
 
       - name: Upload source artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: source-artifacts
           path: |
@@ -113,10 +113,10 @@ jobs:
       options: --privileged
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Download source artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: source-artifacts
           path: dist/
@@ -130,7 +130,7 @@ jobs:
         run: make mock MOCK_CONFIG=rocky-${{ matrix.rocky-version }}-x86_64 MOCK_OPTS="--no-bootstrap-chroot --no-cleanup-after --isolation=simple"
 
       - name: Store RPM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: rocky${{ matrix.rocky-version }}-rpms
           path: |
